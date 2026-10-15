@@ -130,10 +130,17 @@ export function apply(ctx, config) {
     ctx.tools.register(tool)
   }
 
-  // Web panel data route. Registered on the plugin's own context so unloading
-  // the bundle removes it.
-  ctx.effect(
-    () => ctx.webServer.register({
+  // The Web panel is optional: a profile without a web server (the CLI, a
+  // headless run) still gets every tool. `ctx.inject` declares the dependency
+  // and defers registration until `webServer` exists, so the plugin activates
+  // in both deployments instead of failing on a missing service.
+  //
+  // The dependency must be declared this way rather than read directly:
+  // Cordis throws `cannot get property "webServer" without inject` otherwise
+  // (observed on a live harness run).
+  ctx.inject(['webServer'], (webCtx) => {
+    webCtx.effect(
+      () => webCtx.webServer.register({
       kind: 'exact',
       path: ROUTE,
       handler: async (req, res) => {
@@ -190,10 +197,11 @@ export function apply(ctx, config) {
           logger?.warn?.(`mole: panel action "${action}" failed: ${error.message}`)
           return json(res, 500, { error: 'action-failed', action, detail: error.message })
         }
-      },
-    }),
-    'dsh-mole-tool: panel rpc route',
-  )
+        },
+      }),
+      'dsh-mole-tool: panel rpc route',
+    )
+  })
 
   logger?.info?.(`mole: tools registered (launcher ${service.launcher.path} via ${service.launcher.source})`)
 }

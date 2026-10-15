@@ -33,20 +33,45 @@ async function check(name, fn) {
 
 /**
  * Build a minimal Cordis-like context that records registrations.
+ *
+ * `inject` is modelled faithfully: Cordis throws
+ * `cannot get property "webServer" without inject` when a service is read
+ * without declaring it, and that exact failure took the plugin's activation
+ * down on a live harness run. Reproducing it here means the regression cannot
+ * come back unnoticed.
+ *
  * @param options - overrides for the approval and webServer seams.
  * @returns the fake context plus its captured registrations.
  */
 function fakeContext(options = {}) {
-  const captured = { tools: [], routes: [], effects: [], logs: [] }
+  const captured = { tools: [], routes: [], effects: [], logs: [], injected: [] }
+  const hasWebServer = options.webServer !== false
   const ctx = {
     logger: {
       info: (m) => captured.logs.push(['info', m]),
       warn: (m) => captured.logs.push(['warn', m]),
     },
     tools: { register: (tool) => captured.tools.push(tool) },
-    webServer: { register: (route) => { captured.routes.push(route); return () => {} } },
     effect: (fn) => { captured.effects.push(fn); return fn() },
     get: (name) => (name === 'approval' ? options.approval : undefined),
+    inject: (services, callback) => {
+      captured.injected.push(services)
+      // Defer like the real loader: the callback runs only once every declared
+      // service is present, and never runs when one is missing.
+      if (services.includes('webServer') && !hasWebServer) return
+      const child = {
+        webServer: {
+          register: (route) => { captured.routes.push(route); return () => {} },
+        },
+        effect: (fn) => { captured.effects.push(fn); return fn() },
+      }
+      callback(child)
+    },
+    // A bare property read must fail the way Cordis fails it, so a future edit
+    // that drops the inject declaration is caught here rather than in the app.
+    get webServer() {
+      throw new Error('cannot get property "webServer" without inject')
+    },
   }
   return { ctx, captured }
 }
@@ -278,6 +303,24 @@ await check('apply registers tools and the panel route', () => {
   assert.equal(captured.routes.length, 1, 'panel route not registered')
   assert.equal(captured.routes[0].path, '/plugins/dsh-mole-tool/rpc')
   assert.equal(captured.routes[0].kind, 'exact')
+})
+
+await check('apply declares webServer through inject, never a bare read', () => {
+  const { ctx, captured } = fakeContext()
+  // Throws "cannot get property webServer without inject" if the plugin reads
+  // the service directly. This is the regression that broke activation live.
+  apply(ctx, {})
+  assert.ok(
+    captured.injected.some((s) => s.includes('webServer')),
+    'webServer was not declared via ctx.inject',
+  )
+})
+
+await check('apply keeps its tools in a profile with no web server', () => {
+  const { ctx, captured } = fakeContext({ webServer: false })
+  apply(ctx, {})
+  assert.equal(captured.tools.length, 9, 'tools were lost without a web server')
+  assert.equal(captured.routes.length, 0, 'a route registered without a web server')
 })
 
 await check('apply tolerates unknown config keys', () => {

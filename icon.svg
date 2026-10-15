@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Mole">
+  <rect width="64" height="64" rx="14" fill="#2f6f4e"/>
+  <ellipse cx="32" cy="36" rx="19" ry="16" fill="#e8f2ea"/>
+  <ellipse cx="32" cy="40" rx="13" ry="10" fill="#b9d3c1"/>
+  <circle cx="24" cy="31" r="2.6" fill="#1d2a22"/>
+  <circle cx="40" cy="31" r="2.6" fill="#1d2a22"/>
+  <ellipse cx="32" cy="41" rx="4" ry="3.2" fill="#2f6f4e"/>
+  <path d="M20 30c2-6 8-9 12-9s10 3 12 9" fill="none" stroke="#1d2a22" stroke-width="2" stroke-linecap="round"/>
+</svg>

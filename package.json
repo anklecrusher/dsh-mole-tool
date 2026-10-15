@@ -1,0 +1,37 @@
+{
+  "name": "@local/dsh-mole-tool",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mole (mo) CLI integration for DeepSeek Harness: disk cleanup, system maintenance, app inventory and live monitoring as agent tools plus a settings panel.",
+  "main": "./entry.js",
+  "exports": {
+    ".": "./entry.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "icon": "./icon.svg",
+  "files": [
+    "entry.js",
+    "index.js",
+    "client.js",
+    "lib",
+    "locale",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
+      ]
+    }
+  }
+}

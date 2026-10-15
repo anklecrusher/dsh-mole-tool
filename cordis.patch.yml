@@ -1,0 +1,22 @@
+# Registers the Mole (mo) integration bundle.
+#
+# Mole's free GPL-3.0 CLI (`mo`) is driven as an external process. No Mole
+# source is vendored or linked, so the GPL imposes nothing on this plugin.
+#
+# `molePath` is optional. Omit it to let the plugin probe the standard Scoop
+# shim, the script-install location and PATH (verified: probing succeeds
+# unaided on a machine where `scoop install mole` has been run).
+- insert:
+    - id: mole-tool
+      name: '@local/dsh-mole-tool'
+      config:
+        # molePath: C:/Users/me/scoop/shims/mo.exe
+        #
+        # Output encoding of the `mo` process. Mole's Windows launcher writes
+        # through Windows PowerShell, which emits the console code page (936 /
+        # gbk on a zh-CN machine) rather than UTF-8. Change this only if the
+        # decoded text is mojibake.
+        # outputEncoding: gbk
+        #
+        # Per-command deadline in milliseconds.
+        # timeoutMs: 120000
